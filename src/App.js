@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { ethers } from 'ethers';
 import detectEthereumProvider from '@metamask/detect-provider';
 import { Box, Button, VStack, HStack, Text, Textarea, useToast, Spinner, Flex, Heading } from "@chakra-ui/react";
+import Picker from 'emoji-picker-react';
 
 const contractABI = [
   { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "uint256", "name": "messageId", "type": "uint256" }, { "indexed": true, "internalType": "address", "name": "sender", "type": "address" }, { "indexed": false, "internalType": "string", "name": "content", "type": "string" }, { "indexed": false, "internalType": "uint256", "name": "timestamp", "type": "uint256" }], "name": "NewMessage", "type": "event" },
@@ -120,19 +121,38 @@ function App() {
     }
   }, [provider, fetchMessages, toast]);
 
-  return (
-    <Flex 
-      direction="column" 
-      align="center" 
-      justify="center" 
-      minHeight="100vh" 
-      bg="teal.500"
-      color="white"
-    >
-      <Box maxWidth="800px" width="100%" padding={4} bg="whiteAlpha.200" borderRadius="md">
-        <Heading mb={6} textAlign="center">Web3 Messaging App</Heading>
-        <VStack spacing={4} align="stretch">
-          <Button colorScheme="orange" onClick={handleLogin}>Login with MetaMask</Button>
+const [emojiPickerState, SetEmojiPicker] = useState(false);
+const [message, SetMessage] = useState("");
+
+let emojiPicker;
+if (emojiPickerState) {
+  emojiPicker = (
+    <Picker
+      onEmojiClick={onEmojiClick}
+      disableAutoFocus={true}
+      skinTone={SKIN_TONE_MEDIUM_DARK}
+      groupNames={{ smileys_people: "PEOPLE" }}
+      native
+    />
+  );
+}
+
+const triggerPicker = event => {
+  event.preventDefault();
+  SetEmojiPicker(!emojiPickerState);
+};
+
+const onEmojiClick = (event, emojiObject) => {
+  SetMessage(message + emojiObject.emoji);
+};
+
+return (
+  <Flex direction="column" align="center" justify="center" minHeight="100vh" bg="teal.500" color="white">
+    <Box maxWidth="800px" width="100%" padding={4} bg="whiteAlpha.200" borderRadius="md">
+      <Heading mb={6} textAlign="center">Web3 Messaging App</Heading>
+      <VStack spacing={4} align="stretch">
+        <Button colorScheme="orange" onClick={handleLogin}>Login with MetaMask</Button>
+        <Box maxHeight="400px" overflowY="auto">
           {messages.length > 0 ? (
             messages.map((message, index) => (
               <Box key={index} border="1px" borderRadius="md" padding={4} bg="whiteAlpha.800" color="black">
@@ -153,21 +173,23 @@ function App() {
           ) : (
             <Text>No messages yet...</Text>
           )}
-          <VStack spacing={4} align="stretch">
-            <Textarea
-              value={newMessage}
-              onChange={e => setNewMessage(e.target.value)}
-              placeholder="Enter your message here"
-              bg="whiteAlpha.800"
-              color="black"
-            />
-            <Button colorScheme="green" onClick={handleSendMessage} isLoading={loading}>Send Message</Button>
+        </Box>
+        <VStack spacing={4} align="stretch">
+          <Button onClick={triggerPicker}>Insert Emoji</Button>
+          {emojiPicker}
+          <Textarea
+            value={newMessage}
+            onChange={e => setNewMessage(e.target.value)}
+            placeholder="Enter your message here"
+            bg="whiteAlpha.800"
+            color="black"
+          />
+          <Button colorScheme="green" onClick={handleSendMessage} isLoading={loading}>Send Message</Button>
           </VStack>
-        </VStack>
-        {loading && <Spinner />}
-      </Box>
-    </Flex>
-  );
+      </VStack>
+    </Box>
+  </Flex>
+);
 }
 
 export default App;
