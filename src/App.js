@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { ethers } from 'ethers';
 import detectEthereumProvider from '@metamask/detect-provider';
+import { Box, Button, Input, VStack, HStack, Text } from "@chakra-ui/react";
 
 const contractABI = [
   {"anonymous":false,"inputs":[{"indexed":true,"internalType":"uint256","name":"messageId","type":"uint256"},{"indexed":true,"internalType":"address","name":"sender","type":"address"},{"indexed":false,"internalType":"string","name":"content","type":"string"},{"indexed":false,"internalType":"uint256","name":"timestamp","type":"uint256"}],"name":"NewMessage","type":"event"},
@@ -40,7 +41,7 @@ function App() {
     if (contract) {
       fetchMessages();
     }
-  }, [contract]);
+  }, [contract, fetchMessages]);
 
   async function fetchMessages() {
     const count = await contract.getMessageCount();
@@ -50,7 +51,7 @@ function App() {
       const message = await contract.messages(i);
       fetchedMessages.push(message);
     }
-
+  
     setMessages(fetchedMessages);
   }
 
@@ -75,24 +76,35 @@ function App() {
   }
 
   return (
-    <div className="App">
-      <button onClick={handleLogin}>Login with MetaMask</button>
-      <div>
+    <VStack padding={4}>
+      <Button colorScheme="teal" onClick={handleLogin}>Login with MetaMask</Button>
+      <VStack spacing={4} align="stretch">
         {messages.map((message, index) => (
-          <div key={index}>
-            <p>Sender: {message.sender}</p>
-            <p>Content: {message.content}</p>
-            <p>Timestamp: {new Date(message.timestamp * 1000).toLocaleString()}</p>
-          </div>
+          <Box key={index} border="1px" borderRadius="md" padding={4}>
+            <HStack spacing={4}>
+              <Text>Sender:</Text>
+              <Text>{message.sender}</Text>
+            </HStack>
+            <HStack spacing={4}>
+              <Text>Content:</Text>
+              <Text>{message.content}</Text>
+            </HStack>
+            <HStack spacing={4}>
+              <Text>Timestamp:</Text>
+              <Text>{new Date(message.timestamp * 1000).toLocaleString()}</Text>
+            </HStack>
+          </Box>
         ))}
-        <input 
+      </VStack>
+      <HStack spacing={4}>
+        <Input 
           type="text" 
           value={newMessage} 
           onChange={e => setNewMessage(e.target.value)} 
         />
-        <button onClick={handleSendMessage}>Send Message</button>
-      </div>
-    </div>
+        <Button colorScheme="teal" onClick={handleSendMessage}>Send Message</Button>
+      </HStack>
+    </VStack>
   );
 }
 
