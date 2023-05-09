@@ -94,7 +94,7 @@ function App() {
         ))}
       </VStack>
       <HStack spacing={4}>
-        <Input
+        <textarea
           type="text"
           value={newMessage}
           onChange={e => setNewMessage(e.target.value)}
