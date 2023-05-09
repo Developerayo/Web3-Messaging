@@ -135,7 +135,7 @@ function App() {
                     <Text>{message.sender}</Text>
                   </HStack>
                   <HStack spacing={4}>
-                    <Text fontWeight="bold">Content:</Text>
+                    <Text fontWeight="bold">Message:</Text>
                     <Text>{message.content}</Text>
                   </HStack>
                   <HStack spacing={4}>
