@@ -4,14 +4,14 @@ import detectEthereumProvider from '@metamask/detect-provider';
 import { Box, Button, Input, VStack, HStack, Text } from "@chakra-ui/react";
 
 const contractABI = [
-  {"anonymous":false,"inputs":[{"indexed":true,"internalType":"uint256","name":"messageId","type":"uint256"},{"indexed":true,"internalType":"address","name":"sender","type":"address"},{"indexed":false,"internalType":"string","name":"content","type":"string"},{"indexed":false,"internalType":"uint256","name":"timestamp","type":"uint256"}],"name":"NewMessage","type":"event"},
-  {"inputs":[],"name":"getMessageCount","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-  {"inputs":[],"name":"getMessages","outputs":[{"components":[{"internalType":"address","name":"sender","type":"address"},{"internalType":"string","name":"content","type":"string"},{"internalType":"uint256","name":"timestamp","type":"uint256"}],"internalType":"struct Messaging.Message[]","name":"","type":"tuple[]"}],"stateMutability":"view","type":"function"},
-  {"inputs":[{"internalType":"uint256","name":"","type":"uint256"}],"name":"messages","outputs":[{"internalType":"address","name":"sender","type":"address"},{"internalType":"string","name":"content","type":"string"},{"internalType":"uint256","name":"timestamp","type":"uint256"}],"stateMutability":"view","type":"function"},
-  {"inputs":[{"internalType":"string","name":"content","type":"string"}],"name":"sendMessage","outputs":[],"stateMutability":"nonpayable","type":"function"}
+  { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "uint256", "name": "messageId", "type": "uint256" }, { "indexed": true, "internalType": "address", "name": "sender", "type": "address" }, { "indexed": false, "internalType": "string", "name": "content", "type": "string" }, { "indexed": false, "internalType": "uint256", "name": "timestamp", "type": "uint256" }], "name": "NewMessage", "type": "event" },
+  { "inputs": [], "name": "getMessageCount", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" },
+  { "inputs": [], "name": "getMessages", "outputs": [{ "components": [{ "internalType": "address", "name": "sender", "type": "address" }, { "internalType": "string", "name": "content", "type": "string" }, { "internalType": "uint256", "name": "timestamp", "type": "uint256" }], "internalType": "struct Messaging.Message[]", "name": "", "type": "tuple[]" }], "stateMutability": "view", "type": "function" },
+  { "inputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "name": "messages", "outputs": [{ "internalType": "address", "name": "sender", "type": "address" }, { "internalType": "string", "name": "content", "type": "string" }, { "internalType": "uint256", "name": "timestamp", "type": "uint256" }], "stateMutability": "view", "type": "function" },
+  { "inputs": [{ "internalType": "string", "name": "content", "type": "string" }], "name": "sendMessage", "outputs": [], "stateMutability": "nonpayable", "type": "function" }
 ];
 
-const contractAddress = '0x218B6a0234e1070ca7753dF497a135A7d92ED55A'; 
+const contractAddress = '0x218B6a0234e1070ca7753dF497a135A7d92ED55A';
 
 function App() {
   const [provider, setProvider] = useState(null);
@@ -23,7 +23,7 @@ function App() {
   useEffect(() => {
     async function initialize() {
       const ethereumProvider = await detectEthereumProvider();
-      
+
       if (ethereumProvider) {
         const ethersProvider = new ethers.providers.Web3Provider(ethereumProvider);
         const signer = ethersProvider.getSigner();
@@ -46,25 +46,22 @@ function App() {
   async function fetchMessages() {
     const count = await contract.getMessageCount();
     const fetchedMessages = [];
-    
+
     for (let i = 0; i < count; i++) {
       const message = await contract.messages(i);
       fetchedMessages.push(message);
     }
-  
+
     setMessages(fetchedMessages);
   }
 
   async function handleSendMessage() {
-    // Get the list of accounts. This will be empty if the user hasn't approved access.
     const accounts = await provider.request({ method: 'eth_accounts' });
 
-    // If there are no accounts, request access.
     if (accounts.length === 0) {
       await handleLogin();
     }
 
-    // Proceed with sending the message.
     await contract.connect(signer).sendMessage(newMessage);
     fetchMessages();
     setNewMessage('');
@@ -97,10 +94,10 @@ function App() {
         ))}
       </VStack>
       <HStack spacing={4}>
-        <Input 
-          type="text" 
-          value={newMessage} 
-          onChange={e => setNewMessage(e.target.value)} 
+        <Input
+          type="text"
+          value={newMessage}
+          onChange={e => setNewMessage(e.target.value)}
         />
         <Button colorScheme="teal" onClick={handleSendMessage}>Send Message</Button>
       </HStack>
