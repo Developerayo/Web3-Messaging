@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { ethers } from 'ethers';
 import detectEthereumProvider from '@metamask/detect-provider';
-import { Box, Button, Input, VStack, HStack, Text } from "@chakra-ui/react";
+import { Box, Button, VStack, HStack, Text, Textarea, useToast, Spinner } from "@chakra-ui/react";
 
 const contractABI = [
   { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "uint256", "name": "messageId", "type": "uint256" }, { "indexed": true, "internalType": "address", "name": "sender", "type": "address" }, { "indexed": false, "internalType": "string", "name": "content", "type": "string" }, { "indexed": false, "internalType": "uint256", "name": "timestamp", "type": "uint256" }], "name": "NewMessage", "type": "event" },
@@ -19,6 +19,8 @@ function App() {
   const [contract, setContract] = useState(null);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
+  const [loading, setLoading] = useState(false);
+  const toast = useToast();
 
   useEffect(() => {
     async function initialize() {
@@ -37,70 +39,121 @@ function App() {
     initialize();
   }, []);
 
+  const fetchMessages = useCallback(async () => {
+    setLoading(true);
+    try {
+      const count = await contract.getMessageCount();
+      const fetchedMessages = [];
+
+      for (let i = 0; i < count; i++) {
+        const message = await contract.messages(i);
+        fetchedMessages.push(message);
+      }
+
+      setMessages(fetchedMessages);
+    } catch (err) {
+      toast({
+        title: "Error fetching messages",
+        description: err.message,
+        status: "error",
+        duration: 9000,
+        isClosable: true,
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [contract, toast]);
+
   useEffect(() => {
     if (contract) {
       fetchMessages();
     }
   }, [contract, fetchMessages]);
 
-  async function fetchMessages() {
-    const count = await contract.getMessageCount();
-    const fetchedMessages = [];
-
-    for (let i = 0; i < count; i++) {
-      const message = await contract.messages(i);
-      fetchedMessages.push(message);
+  const handleSendMessage = useCallback(async () => {
+    if (!newMessage.trim()) {
+      toast({
+        title: "Message cannot be empty",
+        status: "error",
+        duration: 9000,
+        isClosable: true,
+      });
+      return;
     }
 
-    setMessages(fetchedMessages);
-  }
+    setLoading(true);
+    try {
+      const accounts = await provider.request({ method: 'eth_accounts' });
 
-  async function handleSendMessage() {
-    const accounts = await provider.request({ method: 'eth_accounts' });
+      if (accounts.length === 0) {
+        await handleLogin();
+      }
 
-    if (accounts.length === 0) {
-      await handleLogin();
+      await contract.connect(signer).sendMessage(newMessage);
+      setTimeout(fetchMessages, 5000);
+      setNewMessage('');
+    } catch (err) {
+      toast({
+        title: "Error sending message",
+        description: err.message,
+        status: "error",
+        duration: 9000,
+        isClosable: true,
+      });
+    } finally {
+      setLoading(false);
     }
+  }, [provider, signer, contract, newMessage, fetchMessages, toast]);
 
-    await contract.connect(signer).sendMessage(newMessage);
-    fetchMessages();
-    setNewMessage('');
-  }
-
-  async function handleLogin() {
-    await provider.request({ method: 'eth_requestAccounts' });
-    fetchMessages();
-  }
+  const handleLogin = useCallback(async () => {
+    try {
+      await provider.request({ method: 'eth_requestAccounts' });
+      fetchMessages();
+    } catch (err) {
+      toast({
+        title: "Login error",
+        description: err.message,
+        status: "error",
+        duration: 9000,
+        isClosable: true,
+      });
+    }
+  }, [provider, fetchMessages, toast]);
 
   return (
     <VStack padding={4}>
       <Button colorScheme="teal" onClick={handleLogin}>Login with MetaMask</Button>
       <VStack spacing={4} align="stretch">
-        {messages.map((message, index) => (
-          <Box key={index} border="1px" borderRadius="md" padding={4}>
-            <HStack spacing={4}>
-              <Text>Sender:</Text>
-              <Text>{message.sender}</Text>
-            </HStack>
-            <HStack spacing={4}>
-              <Text>Content:</Text>
-              <Text>{message.content}</Text>
-            </HStack>
-            <HStack spacing={4}>
-              <Text>Timestamp:</Text>
-              <Text>{new Date(message.timestamp * 1000).toLocaleString()}</Text>
-            </HStack>
-          </Box>
-        ))}
+        {messages.length > 0 ? (
+          messages.map((message, index) => (
+            <Box key={index} border="1px" borderRadius="md" padding={4}>
+              <HStack spacing={4}>
+                <Text>Sender:</Text>
+                <Text>{message.sender}</Text>
+              </HStack>
+              <HStack spacing={4}>
+                <Text>Content:</Text>
+                <Text>{message.content}</Text>
+              </HStack>
+              <HStack spacing={4}>
+                <Text>Timestamp:</Text>
+                <Text>{new Date(message.timestamp * 1000).toLocaleString()}</Text>
+              </HStack>
+            </Box>
+          ))
+        ) : (
+          <Text>No messages yet...</Text>
+        )}
       </VStack>
       <HStack spacing={4}>
-        <textarea
-          type="text"
+        <Textarea
           value={newMessage}
           onChange={e => setNewMessage(e.target.value)}
+          placeholder="Enter your message here"
         />
-        <Button colorScheme="teal" onClick={handleSendMessage}>Send Message</Button>
+        <Button colorScheme="teal" onClick={handleSendMessage} isLoading={loading}>Send Message</Button>
       </HStack>
+      {loading && <Spinner />}
     </VStack>
   );
 }
