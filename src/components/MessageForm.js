@@ -1,10 +1,17 @@
 import React, { useState, useCallback } from "react";
-import { Button, Textarea, useToast } from "@chakra-ui/react";
+import {
+  Button,
+  Textarea,
+  useToast,
+  VStack,
+  useColorModeValue,
+} from "@chakra-ui/react";
 
 function MessageForm({ provider, signer, contract, fetchMessages }) {
   const [newMessage, setNewMessage] = useState("");
   const toast = useToast();
   const [loading, setLoading] = useState(false);
+  const colorScheme = useColorModeValue("teal", "orange");
 
   const handleSendMessage = useCallback(async () => {
     if (!newMessage.trim()) {
@@ -45,22 +52,22 @@ function MessageForm({ provider, signer, contract, fetchMessages }) {
   }, [provider, signer, contract, newMessage, fetchMessages, toast]);
 
   return (
-    <>
+    <VStack align="stretch" spacing={4} my={4}>
       <Textarea
         value={newMessage}
         onChange={(e) => setNewMessage(e.target.value)}
         placeholder="Enter your message here"
-        bg="whiteAlpha.800"
+        bg="white"
         color="black"
       />
       <Button
-        colorScheme="green"
+        colorScheme={colorScheme}
         onClick={handleSendMessage}
         isLoading={loading}
       >
         Send Message
       </Button>
-    </>
+    </VStack>
   );
 }
 

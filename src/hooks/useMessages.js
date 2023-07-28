@@ -4,6 +4,7 @@ import { useToast } from "@chakra-ui/react";
 export function useMessages(contract) {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
   const toast = useToast();
 
   const fetchMessages = useCallback(async () => {
@@ -12,12 +13,18 @@ export function useMessages(contract) {
       const count = await contract.getMessageCount();
       const fetchedMessages = [];
 
-      for (let i = 0; i < count; i++) {
+      for (let i = count - 1; i >= 0; i--) {
         const message = await contract.messages(i);
         fetchedMessages.push(message);
+        if (fetchedMessages.length >= 20) {
+          break;
+        }
       }
 
-      setMessages(fetchedMessages);
+      setMessages((prevMessages) => [...prevMessages, ...fetchedMessages]);
+      if (fetchedMessages.length < 20) {
+        setHasMore(false);
+      }
     } catch (err) {
       toast({
         title: "Error fetching messages",
@@ -37,5 +44,5 @@ export function useMessages(contract) {
     }
   }, [contract, fetchMessages]);
 
-  return { messages, fetchMessages, loading };
+  return { messages, fetchMessages, loading, hasMore };
 }

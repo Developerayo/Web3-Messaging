@@ -1,8 +1,9 @@
 import React, { useCallback } from "react";
-import { Button, useToast } from "@chakra-ui/react";
+import { Button, useToast, useColorModeValue } from "@chakra-ui/react";
 
 function LoginButton({ provider, fetchMessages }) {
   const toast = useToast();
+  const colorScheme = useColorModeValue("blue", "yellow");
 
   const handleLogin = useCallback(async () => {
     try {
@@ -20,7 +21,7 @@ function LoginButton({ provider, fetchMessages }) {
   }, [provider, fetchMessages, toast]);
 
   return (
-    <Button colorScheme="orange" onClick={handleLogin}>
+    <Button colorScheme={colorScheme} onClick={handleLogin} size="lg" my={4}>
       Login with MetaMask
     </Button>
   );
