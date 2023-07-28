@@ -1,17 +1,16 @@
 import React, { useState, useCallback } from "react";
-import {
-  Button,
-  Textarea,
-  useToast,
-  VStack,
-  useColorModeValue,
-} from "@chakra-ui/react";
+import { Button, Textarea, useToast, VStack } from "@chakra-ui/react";
 
-function MessageForm({ provider, signer, contract, fetchMessages }) {
+function MessageForm({
+  provider,
+  signer,
+  contract,
+  fetchMessages,
+  addNewMessage,
+}) {
   const [newMessage, setNewMessage] = useState("");
   const toast = useToast();
   const [loading, setLoading] = useState(false);
-  const colorScheme = useColorModeValue("teal", "orange");
 
   const handleSendMessage = useCallback(async () => {
     if (!newMessage.trim()) {
@@ -23,20 +22,27 @@ function MessageForm({ provider, signer, contract, fetchMessages }) {
       });
       return;
     }
-
+  
     setLoading(true);
     try {
       let accounts = await provider.request({ method: "eth_accounts" });
-
+  
       if (accounts.length === 0) {
         await provider.request({ method: "eth_requestAccounts" });
         accounts = await provider.request({ method: "eth_accounts" });
       }
-
+  
       if (accounts.length > 0) {
+        const message = {
+          sender: await signer.getAddress(),
+          content: newMessage,
+          timestamp: Math.floor(Date.now() / 1000),
+        };
+  
         await contract.connect(signer).sendMessage(newMessage);
-        setTimeout(fetchMessages, 5000);
         setNewMessage("");
+        addNewMessage(message);
+        setTimeout(fetchMessages, 5000);
       }
     } catch (err) {
       toast({
@@ -49,7 +55,16 @@ function MessageForm({ provider, signer, contract, fetchMessages }) {
     } finally {
       setLoading(false);
     }
-  }, [provider, signer, contract, newMessage, fetchMessages, toast]);
+  }, [
+    provider,
+    signer,
+    contract,
+    newMessage,
+    fetchMessages,
+    toast,
+    addNewMessage,
+  ]);
+  
 
   return (
     <VStack align="stretch" spacing={4} my={4}>
@@ -61,7 +76,6 @@ function MessageForm({ provider, signer, contract, fetchMessages }) {
         color="black"
       />
       <Button
-        colorScheme={colorScheme}
         onClick={handleSendMessage}
         isLoading={loading}
       >

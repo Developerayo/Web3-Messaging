@@ -44,5 +44,9 @@ export function useMessages(contract) {
     }
   }, [contract, fetchMessages]);
 
-  return { messages, fetchMessages, loading, hasMore };
+  const addNewMessage = useCallback((message) => {
+    setMessages((prevMessages) => [message, ...prevMessages]);
+  }, []);
+  
+  return { messages, fetchMessages, loading, hasMore, addNewMessage };
 }
